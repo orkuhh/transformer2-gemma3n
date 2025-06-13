@@ -298,7 +298,7 @@ def setup_huggingface_auth():
     # Method 3: Manual authentication prompt (for interactive use)
     if not hf_token:
         logger.warning("⚠️  No HuggingFace token found. For Gemma 3n access, you need to:")
-                    logger.warning("   1. Get approved access at https://huggingface.co/google/gemma-3-4b-it")
+        logger.warning("   1. Get approved access at https://huggingface.co/google/gemma-3-4b-it")
         logger.warning("   2. Set HF_TOKEN environment variable or run: huggingface-cli login")
         return False
     

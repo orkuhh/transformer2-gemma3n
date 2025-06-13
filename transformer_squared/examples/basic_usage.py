@@ -184,7 +184,7 @@ def demonstrate_expert_system(config):
         print(f"⚠️  Expert system error: {e}")
 
 def demonstrate_text_generation(model, tokenizer):
-    """Demonstrate text generation with error handling."""
+    """Demonstrate text generation with error handling for both processor and tokenizer."""
     if not all([model, tokenizer]):
         print("⚠️  Skipping text generation - model not loaded")
         return
@@ -198,32 +198,143 @@ def demonstrate_text_generation(model, tokenizer):
         "In a world where robots and humans coexist,"
     ]
     
+    # Determine if we have a processor (multimodal) or tokenizer (text-only)
+    is_processor = hasattr(tokenizer, 'tokenizer') or hasattr(tokenizer, 'image_processor')
+    print(f"Using {'processor (multimodal)' if is_processor else 'tokenizer (text-only)'}")
+    
+    # Get the actual tokenizer
+    if hasattr(tokenizer, 'tokenizer'):
+        # This is a processor with an embedded tokenizer
+        actual_tokenizer = tokenizer.tokenizer
+    else:
+        # This is a regular tokenizer
+        actual_tokenizer = tokenizer
+    
+    # Ensure tokenizer has proper token IDs - critical for Gemma models
+    if actual_tokenizer.pad_token_id is None:
+        if actual_tokenizer.eos_token_id is not None:
+            actual_tokenizer.pad_token_id = actual_tokenizer.eos_token_id
+        else:
+            # Fallback for Gemma models
+            actual_tokenizer.pad_token_id = 1  # Gemma typically uses 1 for EOS
+    
+    # Set up proper generation parameters for Gemma models
+    generation_kwargs = {
+        'max_new_tokens': 50,
+        'do_sample': True,
+        'temperature': 0.7,
+        'top_p': 0.9,
+        'repetition_penalty': 1.1,
+        'pad_token_id': actual_tokenizer.pad_token_id,
+        'eos_token_id': actual_tokenizer.eos_token_id,
+        'use_cache': True
+    }
+    
     for prompt in prompts:
         try:
             print(f"\n💭 Prompt: '{prompt}'")
             
-            # Tokenize input
-            inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=100)
+            # Handle Gemma-3 processor correctly
+            if is_processor:
+                # For Gemma-3 multimodal processor, use text-only input
+                try:
+                    # Use the processor with text input only (no images)
+                    inputs = tokenizer(
+                        text=prompt,
+                        return_tensors="pt",
+                        padding=True,
+                        truncation=True,
+                        max_length=512
+                    )
+                    print(f"   📄 Using processor with text-only input")
+                except Exception as proc_error:
+                    print(f"   ⚠️  Processor failed: {proc_error}")
+                    # Fallback to using the embedded tokenizer directly
+                    try:
+                        inputs = actual_tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+                        print(f"   📄 Using embedded tokenizer directly")
+                    except Exception as tok_error:
+                        print(f"   ⚠️  Tokenizer also failed: {tok_error}")
+                        continue
+            else:
+                # Regular tokenization for text-only models
+                inputs = actual_tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+                print(f"   📄 Using tokenizer formatting")
             
-            # Generate response with conservative settings
-            with torch.no_grad():
-                outputs = model.generate(
-                    inputs['input_ids'],
-                    max_new_tokens=50,
-                    do_sample=True,
-                    temperature=0.7,
-                    pad_token_id=tokenizer.eos_token_id,
-                    attention_mask=inputs.get('attention_mask')
-                )
+            # Ensure we have valid input_ids
+            if 'input_ids' not in inputs or inputs['input_ids'] is None:
+                print(f"⚠️  Failed to tokenize prompt: '{prompt[:30]}...'")
+                continue
             
-            # Decode response
-            response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-            generated_text = response[len(prompt):].strip()
+            # Ensure input_ids is not empty
+            if inputs['input_ids'].numel() == 0:
+                print(f"⚠️  Empty tokenization for prompt: '{prompt[:30]}...'")
+                continue
             
-            print(f"🤖 Generated: '{generated_text}'")
+            # Move inputs to the same device as the model
+            if hasattr(model, 'device'):
+                inputs = {k: v.to(model.device) if hasattr(v, 'to') else v for k, v in inputs.items()}
+            
+            # Generate response with error handling
+            try:
+                with torch.no_grad():
+                    outputs = model.generate(
+                        **inputs,
+                        **generation_kwargs
+                    )
+            except Exception as gen_error:
+                print(f"⚠️  Generation error: {gen_error}")
+                # Try with simpler parameters
+                try:
+                    with torch.no_grad():
+                        outputs = model.generate(
+                            inputs['input_ids'],
+                            max_new_tokens=30,
+                            do_sample=False,  # Use greedy decoding
+                            pad_token_id=actual_tokenizer.pad_token_id,
+                            eos_token_id=actual_tokenizer.eos_token_id
+                        )
+                except Exception as simple_gen_error:
+                    print(f"⚠️  Simple generation also failed: {simple_gen_error}")
+                    continue
+            
+            # Validate outputs
+            if outputs is None:
+                print(f"⚠️  Generation returned None for prompt '{prompt[:30]}...'")
+                continue
+                
+            if not hasattr(outputs, '__getitem__') or len(outputs) == 0:
+                print(f"⚠️  Generation returned empty or invalid output for prompt '{prompt[:30]}...'")
+                continue
+            
+            try:
+                # Extract the first sequence
+                generated_sequence = outputs[0]
+                
+                # Decode the response
+                response = actual_tokenizer.decode(generated_sequence, skip_special_tokens=True)
+                
+                # Extract only the generated part (remove the input prompt)
+                input_length = inputs['input_ids'].shape[1]
+                if len(outputs[0]) > input_length:
+                    generated_tokens = outputs[0][input_length:]
+                    generated_text = actual_tokenizer.decode(generated_tokens, skip_special_tokens=True).strip()
+                else:
+                    # Fallback - try to extract by removing prompt text
+                    generated_text = response.replace(prompt, "").strip()
+                
+                if generated_text:
+                    print(f"🤖 Generated: '{generated_text}'")
+                else:
+                    print(f"🤖 Generated: (empty response - model may have only repeated the prompt)")
+                    
+            except Exception as decode_error:
+                print(f"⚠️  Failed to decode response: {decode_error}")
             
         except Exception as e:
             print(f"⚠️  Generation failed for prompt '{prompt[:30]}...': {e}")
+            import traceback
+            print(f"   Full error: {traceback.format_exc()}")
 
 def main():
     """Main demonstration function."""
