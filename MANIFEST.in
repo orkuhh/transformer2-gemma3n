@@ -1,0 +1,26 @@
+include README.md
+include AUTHENTICATION.md
+include LICENSE
+include pyproject.toml
+include setup.py
+include test_framework.py
+
+# Include all package files
+recursive-include transformer_squared *.py
+recursive-include transformer_squared *.txt
+recursive-include transformer_squared *.yaml
+recursive-include transformer_squared *.json
+
+# Include examples
+recursive-include transformer_squared/examples *.py
+
+# Include documentation
+recursive-include docs *.md
+recursive-include docs *.rst
+
+# Exclude development files
+exclude .gitignore
+exclude .pre-commit-config.yaml
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store 
