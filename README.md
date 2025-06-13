@@ -1,10 +1,10 @@
-# 🚀 Transformer-Squared Framework with Gemma 3n
+# 🚀 Transformer-Squared Framework with Gemma 3
 
-A cutting-edge implementation of the **Transformer²** self-adaptive framework combined with Google's **Gemma 3n E4B** model ([google/gemma-3n-E4B-it-litert-preview](https://huggingface.co/google/gemma-3n-E4B-it-litert-preview)) for real-time task adaptation in large language models.
+A cutting-edge implementation of the **Transformer²** self-adaptive framework combined with Google's **Gemma 3** model ([google/gemma-3-4b-it](https://huggingface.co/google/gemma-3-4b-it)) for real-time task adaptation in large language models.
 
 ## 📋 Overview
 
-This framework implements the research from [Transformer-Squared: Self-adaptive LLMs](https://arxiv.org/html/2501.06252v3) with Google's **actual Gemma 3n E4B** model, featuring:
+This framework implements the research from [Transformer-Squared: Self-adaptive LLMs](https://arxiv.org/html/2501.06252v3) with Google's **Gemma 3** model, featuring:
 
 - **🎯 Self-Adaptive Architecture**: Real-time adaptation to unseen tasks without retraining
 - **⚡ Singular Value Fine-tuning (SVF)**: Parameter-efficient adaptation by tuning only singular values
@@ -17,8 +17,8 @@ This framework implements the research from [Transformer-Squared: Self-adaptive 
 
 ### Core Components
 
-1. **Gemma 3n E4B Integration** (`models/`)
-   - Actual Google Gemma 3n E4B model with native optimizations
+1. **Gemma 3 Integration** (`models/`)
+   - Google Gemma 3 model with native optimizations
    - Edge-optimized transformer with PLE caching
    - MatFormer (Matryoshka Transformer) architecture
    - Selective parameter activation for efficiency
@@ -54,9 +54,9 @@ pip install -r transformer_squared/requirements.txt
 
 ### 🔐 Authentication Required
 
-Since this framework uses the actual Gemma 3n E4B model, you'll need to:
+Since this framework uses the Gemma 3 model, you'll need to:
 
-1. **Accept the license** at [google/gemma-3n-E4B-it-litert-preview](https://huggingface.co/google/gemma-3n-E4B-it-litert-preview)
+1. **Accept the license** at [google/gemma-3-4b-it](https://huggingface.co/google/gemma-3-4b-it)
 2. **Authenticate with Hugging Face**:
    ```bash
    huggingface-cli login
@@ -69,9 +69,9 @@ Since this framework uses the actual Gemma 3n E4B model, you'll need to:
 ```python
 from transformer_squared.utils.model_utils import ModelLoader
 
-# Create complete system with actual Gemma 3n E4B
+# Create complete system with Gemma 3
 system = ModelLoader.create_complete_system(
-    model_name="google/gemma-3n-E4B-it-litert-preview",
+    model_name="google/gemma-3-4b-it",
     model_config={'num_experts': 8, 'svf_rank': 16}
 )
 
@@ -110,7 +110,7 @@ python transformer_squared/examples/basic_usage.py --interactive
 from transformer_squared.models.gemma3n_model import Gemma3nConfig
 
 config = Gemma3nConfig(
-    model_name="google/gemma-3n-E4B-it-litert-preview",  # Actual Gemma 3n E4B
+    model_name="google/gemma-3-4b-it",  # Gemma 3 model
     num_experts=8,           # Number of expert vectors
     svf_rank=16,            # SVF decomposition rank
     use_ple_caching=True,   # Enable PLE caching

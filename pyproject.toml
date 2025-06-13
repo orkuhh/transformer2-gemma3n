@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "transformer-squared-gemma3n"
 version = "1.0.0"
-description = "Self-adaptive LLM framework with Google's Gemma 3n E4B model"
+description = "Self-adaptive LLM framework with Google's Gemma 3 model"
 readme = "README.md"
 license = {file = "LICENSE"}
 authors = [
@@ -79,7 +79,7 @@ Repository = "https://github.com/transformer-squared/gemma3n"
 Documentation = "https://transformer-squared.readthedocs.io/"
 "Bug Reports" = "https://github.com/transformer-squared/gemma3n/issues"
 "Research Paper" = "https://arxiv.org/html/2501.06252v3"
-"Gemma 3n Model" = "https://huggingface.co/google/gemma-3n-E4B-it-litert-preview"
+"Gemma 3 Model" = "https://huggingface.co/google/gemma-3-4b-it"
 
 [tool.setuptools]
 packages = ["transformer_squared"]

@@ -18,7 +18,7 @@ setup(
     version="1.0.0",
     author="Transformer-Squared Team",
     author_email="contact@transformer-squared.ai",
-    description="Self-adaptive LLM framework with Google's Gemma 3n E4B model",
+    description="Self-adaptive LLM framework with Google's Gemma 3 model",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/transformer-squared/gemma3n",
@@ -89,6 +89,6 @@ setup(
         "Source": "https://github.com/transformer-squared/gemma3n",
         "Documentation": "https://transformer-squared.readthedocs.io/",
         "Research Paper": "https://arxiv.org/html/2501.06252v3",
-        "Gemma 3n Model": "https://huggingface.co/google/gemma-3n-E4B-it-litert-preview",
+        "Gemma 3 Model": "https://huggingface.co/google/gemma-3-4b-it",
     },
 ) 
